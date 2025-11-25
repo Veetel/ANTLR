@@ -1,41 +1,65 @@
 grammar Expr_Calculette;
 
-start : expr (sep expr)* EOF ;
+start : instruction (sep instruction)* sep? EOF ;
 
-
-expr : expr_ar | expr_bool ;
-
-
-expr_bool returns [boolean val int value]
-        : a = expr_bool 'or' b = expr_bool {$val = $a.val || $b.val ;}
-        | a = expr_bool 'and' b = expr_bool{$val = $a.val && $b.val ; } 
-        | '(' expr_bool ')'{$val = $expr_bool.val ; }
-        | 'not' expr_bool{$val = !$expr_bool.val ; }
-        | BOOL {$val = BOOL.text.equals("true") ; }
-        | a = expr_ar '<>' b = expr_ar {$val = !$a.value.equals($b.value);} 
-        | a = expr_ar '==' b = expr_ar {$val = $a.value.equals($b.value) ;}
-        | a = expr_ar '=>' b = expr_ar {$val = $b.value <= $a.value ; }
-        | a = expr_ar '<=' b = expr_ar {$val = $a.value <= $b.value ; }
-        | a = expr_ar '<'  b = expr_ar {$val = $a.value < $b.value ; }
-        | a = expr_ar '>'  b = expr_ar {$val = $a.value > $b.value ; }
+instruction
+        : expr
+        | 'Afficher' '(' e=expr ')'                 {System.out.println($e.val);}
         ;
 
-        
+expr returns [String val] 
+        : a=expr_ar                                 {$val = Integer.toString($a.val);}
+        | b=expr_bool                               {$val = Boolean.toString($b.val);}
+        ;
+
+// Priorités : not > and > or
+expr_bool returns [boolean val]
+    : o=orExpr { $val = $o.val; }
+    ;
+
+orExpr returns [boolean val]
+    : a=andExpr { $val = $a.val; } ('or' b=andExpr { $val = $val || $b.val; })*
+    ;
+
+andExpr returns [boolean val]
+    : a=notExpr { $val = $a.val; } ('and' b=notExpr { $val = $val && $b.val; })*
+    ;
+
+notExpr returns [boolean val]
+        : 'not' g=notExpr                 { $val = !$g.val; }
+        | '(' e=expr_bool ')'             { $val = $e.val; }
+        | BOOL                            { $val = $BOOL.text.equals("true"); }
+        | c=expr_ar '<>' d=expr_ar        { $val = $c.val != $d.val; }
+        | c=expr_ar '==' d=expr_ar        { $val = $c.val == $d.val; }
+        | c=expr_ar '>=' d=expr_ar        { $val = $c.val >= $d.val; }
+        | c=expr_ar '<=' d=expr_ar        { $val = $c.val <= $d.val; }
+        | c=expr_ar '<'  d=expr_ar        { $val = $c.val <  $d.val; }
+        | c=expr_ar '>'  d=expr_ar        { $val = $c.val >  $d.val; }
+        ;
+
+// Priorités : * / > + - 
 expr_ar returns [int val]
-        :'(' expr_ar ')'{$val = $expr_ar.val ; }
-        | a = expr_ar' *' b = expr_ar {$val = $a.val  * $b.val ; }
-        | a = expr_ar '/' b = expr_ar {$val = $a.val  / $b.val ; }
-        | a = expr_ar '+' b = expr_ar {$val = $a.val + $b.val ; }
-        | a = expr_ar '-' b = expr_ar {$val = $a.val - $b.val ; }
-        | '-(' expr_ar')'{$val = - $expr_ar.val ; }
-        | ENTIER {$val = Integer.parseInt($ENTIER.val) ; }
-        ;
+    : c=multExpr { $val = $c.val; } ('+' d=multExpr { $val = $val + $d.val; }| '-' d=multExpr { $val = $val - $d.val; })*
+    ;
 
-sep : (';' | '\n')+;
+multExpr returns [int val]
+    : c=entExpr { $val = $c.val; } ('*' d=entExpr { $val = $val * $d.val; }| '/' d=entExpr { $val = $val / $d.val; } )*
+    ;
 
-NEWLINE : '\r'? '\n'-> skip;
-WS : (' '|'\t'| ';')+ -> skip;
-ENTIER : [-+]?('0'..'9')+;
-BOOL : 'true' | 'false';
+entExpr returns [int val]
+    : ENTIER { $val = Integer.parseInt($ENTIER.text); } 
+    | '-' f=entExpr                         { $val = -$f.val; } 
+    | '(' e=expr_ar ')'                 { $val = $e.val; }
+    ;
+
+
+NEWLINE : '\r'? '\n';
+WS      : (' ' | '\t')+ -> skip;
+
+ENTIER  : ('0'..'9')+;
+BOOL    : 'true' | 'false';
+
+sep : (';' | NEWLINE)+;
 
 UNMATCH : . -> skip;
+
