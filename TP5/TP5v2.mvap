@@ -1,0 +1,47 @@
+#Lit Numérateur 1 et le stock
+READ
+STOREG 1 
+
+#Lit Dénominateur 2 et le stock
+READ
+STOREG 2
+
+#Lit Numérateur 1 et le stock
+READ
+STOREG 3
+
+#Lit Dénominateur 2 et le stock
+READ
+STOREG 4
+
+#Lit Numérateur 1 et le multiplie avec Dénominateur 2
+PUSHG 1
+PUSHG 4
+MUL
+STOREG 1
+
+
+
+#Lit Dénominateur 2  et le multiplie avec Dénominateur 1
+PUSHG 3
+PUSHG 2
+MUL
+STOREG 3
+
+
+#Lit Dénominateur 1 et le multiplie
+PUSHG 2
+PUSHG 4
+MUL
+STOREG 2
+
+PUSHG 1
+PUSHG 3
+ADD
+WRITE
+POP
+PUSHG 2
+WRITE
+POP
+HALT
+
