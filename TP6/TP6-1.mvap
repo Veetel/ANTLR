@@ -1,0 +1,20 @@
+READ #Addr 0
+READ #Addr 1
+
+LABEL a 
+    DUP
+    PUSHG 0
+    SUP 
+    JUMPF b
+    PUSHG 0
+    WRITE
+    PUSHI 1
+    ADD 
+    STOREG 0
+    JUMP a
+
+LABEL b
+    POP
+    POP
+    HALT
+    

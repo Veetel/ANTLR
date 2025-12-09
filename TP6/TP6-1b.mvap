@@ -1,0 +1,34 @@
+READ #Addr 0
+
+
+LABEL a 
+    PUSHI 1
+    PUSHG 0
+    INF 
+    JUMPF b
+
+    PUSHG 0
+    PUSHI 2
+    MOD
+    PUSHI 0
+    EQUAL
+    JUMPF c
+
+    PUSHG 0
+    PUSHI 2
+    DIV 
+    STOREG 0
+    JUMP a
+
+LABEL b
+    POP
+    HALT
+    
+LABEL c
+    PUSHG 0
+    PUSHI 3
+    MUL
+    PUSHI 1
+    ADD
+    STOREG 0
+    JUMP a
