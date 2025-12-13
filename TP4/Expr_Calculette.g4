@@ -1,4 +1,13 @@
 grammar Expr_Calculette;
+/
+@header{ 
+    import java.util.HashMap;
+    import java.util.Map;
+}
+@members{
+    Map<String, String> types = new HashMap<>();
+    Map<String, String> valeurs = new HashMap<>();
+}
 
 start : instruction (sep instruction)* sep? EOF ;
 
@@ -10,20 +19,22 @@ instruction
         ;
 
 declaration 
-    : t=typage id1=ID suite_id[$t.type]
+    : t=typage id=ID {types.put($id.text,$t.type);} (',' a=ID {types.put($a.text,$t.type);})*
     ;
 
 typage returns [String type]
-    : TYPE { $type = $TYPE.text; }
-    ;
-
-suite_id[String typeVar]
-    : ',' ID suite_id[$typeVar]
-    |
+    : a=TYPE {$type=$a.text;}
     ;
 
 affectation 
-    : ID '=' expr
+    : a=ID '=' b=expr { if (types.get($a.text) == null){
+                            System.err.println("Erreur : Variable non déclaré");
+                        }else if (!types.get($a.text).equals($b.type)) {
+                            System.err.println("Erreur : Type ID ≠ Type expr");
+                        } else {
+                            valeurs.put($a.text, $b.val);
+                        }
+        }
     ;
 
 expr returns [String val, String type] 
@@ -33,28 +44,19 @@ expr returns [String val, String type]
 
 // Priorités : not > and > or
 expr_bool returns [boolean val]
-    : o=orExpr { $val = $o.val; }
+    : '(' e=expr_bool ')'             { $val = $e.val; }
+    |'not' e=expr_bool               { $val = !$e.val; } 
+    | a=expr_bool 'and' b=expr_bool   { $val = $a.val && $b.val; } 
+    | a=expr_bool 'or'  b=expr_bool   { $val = $a.val || $b.val; }
+    | BOOL                                              { $val = $BOOL.text.equals("true"); }
+    | c=expr_ar '<>' d=expr_ar                          { $val = $c.val != $d.val; }
+    | c=expr_ar '==' d=expr_ar                          { $val = $c.val == $d.val; }
+    | c=expr_ar '>=' d=expr_ar                          { $val = $c.val >= $d.val; }
+    | c=expr_ar '<=' d=expr_ar                          { $val = $c.val <= $d.val; }
+    | c=expr_ar '<'  d=expr_ar                          { $val = $c.val <  $d.val; }
+    | c=expr_ar '>'  d=expr_ar                          { $val = $c.val >  $d.val; }
     ;
 
-orExpr returns [boolean val]
-    : a=andExpr { $val = $a.val; } ('or' b=andExpr { $val = $val || $b.val; })*
-    ;
-
-andExpr returns [boolean val]
-    : a=notExpr { $val = $a.val; } ('and' b=notExpr { $val = $val && $b.val; })*
-    ;
-
-notExpr returns [boolean val]
-        : 'not' g=notExpr                 { $val = !$g.val; }
-        | '(' e=expr_bool ')'             { $val = $e.val; }
-        | BOOL                            { $val = $BOOL.text.equals("true"); }
-        | c=expr_ar '<>' d=expr_ar        { $val = $c.val != $d.val; }
-        | c=expr_ar '==' d=expr_ar        { $val = $c.val == $d.val; }
-        | c=expr_ar '>=' d=expr_ar        { $val = $c.val >= $d.val; }
-        | c=expr_ar '<=' d=expr_ar        { $val = $c.val <= $d.val; }
-        | c=expr_ar '<'  d=expr_ar        { $val = $c.val <  $d.val; }
-        | c=expr_ar '>'  d=expr_ar        { $val = $c.val >  $d.val; }
-        ;
 
 // Priorités : * / > + - 
 expr_ar returns [int val]
@@ -76,11 +78,12 @@ NEWLINE : '\r'? '\n';
 WS      : (' ' | '\t')+ -> skip;
 
 TYPE    : 'entier' | 'booleen';
-ENTIER  : ('0'..'9')+;
+ENTIER  : ('0'..'9')+; // ENTIER  : '0' |  ('1'..'9')('0'..'9')*;
 BOOL    : 'true' | 'false';
 ID      : [a-z]+;
 
-sep : (';' | NEWLINE)+;
+sep : (';' | NEWLINE) (NEWLINE)* ;
 
 UNMATCH : . -> skip;
 
+    

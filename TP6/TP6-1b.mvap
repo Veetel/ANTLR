@@ -1,17 +1,17 @@
 READ #Addr 0
 
 
-LABEL a 
+LABEL a         # Premiere partie du programme
     PUSHI 1
     PUSHG 0
-    INF 
-    JUMPF b
+    INF         #on verifie si x > 1
+    JUMPF b     #s'il n'est pas supérieur, on va en b , sinon on continu
 
     PUSHG 0
     PUSHI 2
     MOD
     PUSHI 0
-    EQUAL
+    EQUAL       #On verifie si le modulo vaut 0 si c'est le cas on continu sinon on va en c
     JUMPF c
 
     PUSHG 0
@@ -20,7 +20,7 @@ LABEL a
     STOREG 0
     JUMP a
 
-LABEL b
+LABEL b         #fin du programme on pop le x sauvegarder au début
     POP
     HALT
     
